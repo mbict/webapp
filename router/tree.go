@@ -28,25 +28,29 @@ func longestCommonPrefix(a, b string) int {
 
 // Search for a wildcard segment and check the name for invalid characters.
 // Returns -1 as index, if no wildcard was found.
-func findWildcard(path string) (wilcard string, i int, valid bool) {
+func findWildcard(path string) (wildcard string, i int, valid bool) {
 	// Find start
 	for start, c := range []byte(path) {
-		// A wildcard starts with '@' (param) or '*' (catch-all)
-		if c != '@' && c != '*' {
+		// A wildcard starts with '{' (param) '}' or '*' (catch-all)
+		if c != '{' && c != '*' {
 			continue
 		}
+
+		isValidParam := c != '{'
 
 		// Find end and check for invalid characters
 		valid = true
 		for end, c := range []byte(path[start+1:]) {
-			switch c {
-			case '/', ':':
-				return path[start : start+1+end], start, valid
-			case '@', '*':
+			switch {
+			case c == '}' && !isValidParam:
+				isValidParam = true
+			case isClosingCharacter(c):
+				return path[start : start+1+end], start, valid && isValidParam
+			case c == '{' || c == '*':
 				valid = false
 			}
 		}
-		return path[start:], start, valid
+		return path[start:], start, valid && isValidParam
 	}
 	return "", -1, false
 }
@@ -55,11 +59,27 @@ func countParams(path string) int {
 	var n int
 	for i := range []byte(path) {
 		switch path[i] {
-		case '@', '*':
+		case '{', '*':
 			n++
 		}
 	}
 	return n
+}
+
+func extractParamNames(path string) []string {
+	var paramNames []string
+	var paramStart int
+	for i := range []byte(path) {
+		switch path[i] {
+		case '{':
+			paramStart = i + 1
+		case '}':
+			paramNames = append(paramNames, path[paramStart:i])
+		case '*':
+			paramNames = append(paramNames, path[i+1:])
+		}
+	}
+	return paramNames
 }
 
 type nodeType uint8
@@ -120,7 +140,7 @@ func (n *node) addRoute(path string, routeInfo *routeInfo) {
 walk:
 	for {
 		// Find the longest common prefix.
-		// This also implies that the common prefix contains no '@' or '*'
+		// This also implies that the common prefix contains no '{' or '*'
 		// since the existing key can't contain those chars.
 		i := longestCommonPrefix(path, n.path)
 
@@ -137,7 +157,6 @@ walk:
 			}
 
 			n.children = []*node{&child}
-			// []byte for proper unicode char conversion, see #65
 			n.indices = string([]byte{n.path[i]})
 			n.path = path[:i]
 			n.routeInfo = nil
@@ -157,7 +176,7 @@ walk:
 					// Adding a child to a catchAll is not possible
 					n.nType != catchAll &&
 					// Check for longer wildcard, e.g. :name and :names
-					(len(n.path) >= len(path) || path[len(n.path)] == '/' || path[len(n.path)] == ':') {
+					(len(n.path) >= len(path) || isClosingCharacter(path[len(n.path)])) {
 					continue walk
 				} else {
 					// Wildcard conflict
@@ -166,6 +185,15 @@ walk:
 						pathSeg = strings.SplitN(pathSeg, "/", 2)[0]
 					}
 					prefix := fullPath[:strings.Index(fullPath, pathSeg)] + n.path
+
+					if pathSeg[0] == '{' && pathSeg[len(pathSeg)-1] != '}' {
+						panic("param '" + pathSeg +
+							"' in new path '" + fullPath +
+							"' is not properly closed with a '}' and conflicts with existing wildcard '" + n.path +
+							"' in existing prefix '" + prefix +
+							"'")
+					}
+
 					panic("'" + pathSeg +
 						"' in new path '" + fullPath +
 						"' conflicts with existing wildcard '" + n.path +
@@ -177,7 +205,7 @@ walk:
 			idxc := path[0]
 
 			// '/' or ':' after param
-			if n.nType == param && (idxc == '/' || idxc == ':') && len(n.children) == 1 {
+			if n.nType == param && isClosingCharacter(idxc) && len(n.children) == 1 {
 				n = n.children[0]
 				n.priority++
 				continue walk
@@ -193,7 +221,7 @@ walk:
 			}
 
 			// Otherwise insert it
-			if idxc != '@' && idxc != '*' {
+			if idxc != '{' && idxc != '*' {
 				// []byte for proper unicode char conversion, see #65
 				n.indices += string([]byte{idxc})
 				child := &node{}
@@ -222,10 +250,15 @@ func (n *node) insertChild(path, fullPath string, routeInfo *routeInfo) {
 			break
 		}
 
-		// The wildcard name must not contain '@' and '*'
+		// The wildcard name must not contain '{' and '*'
 		if !valid {
-			panic("only one wildcard per path segment is allowed, has: '" +
-				wildcard + "' in path '" + fullPath + "'")
+			if wildcard[0] == '{' {
+				panic("invalid path param defined, not properly closed with a '}' : '" +
+					wildcard + "' in path '" + fullPath + "'")
+			} else {
+				panic("only one wildcard per path segment is allowed, has: '" +
+					wildcard + "' in path '" + fullPath + "'")
+			}
 		}
 
 		// Check if the wildcard has a name
@@ -241,7 +274,7 @@ func (n *node) insertChild(path, fullPath string, routeInfo *routeInfo) {
 		}
 
 		// param
-		if wildcard[0] == '@' {
+		if wildcard[0] == '{' {
 			if i > 0 {
 				// Insert prefix before the current wildcard
 				n.path = path[:i]
@@ -285,7 +318,7 @@ func (n *node) insertChild(path, fullPath string, routeInfo *routeInfo) {
 
 		// Currently fixed width 1 for '/' or ':'
 		i--
-		if path[i] != '/' && path[i] != ':' {
+		if !isClosingCharacter(path[i]) {
 			panic("no / before catch-all in path '" + fullPath + "'")
 		}
 
@@ -316,6 +349,11 @@ func (n *node) insertChild(path, fullPath string, routeInfo *routeInfo) {
 	// If no wildcard was found, simply insert the path and handle
 	n.path = path
 	n.routeInfo = routeInfo
+}
+
+// isClosingChar are the allowed characters to close a path segment for a path variable
+func isClosingCharacter(c byte) bool {
+	return c == '/' || c == ':' || c == '@' || c == '#' || c == ';' || c == '|'
 }
 
 // Returns the handle registered with the given path (key). The values of
@@ -356,7 +394,7 @@ walk: // Outer loop for walking the tree
 				case param:
 					// Find param end (either '/' or ':' or path end)
 					end := 0
-					for end < len(path) && path[end] != '/' && path[end] != ':' {
+					for end < len(path) && !isClosingCharacter(path[end]) {
 						end++
 					}
 
@@ -426,7 +464,7 @@ walk: // Outer loop for walking the tree
 			// No handle found. Check if a handle for this path + a
 			// trailing slash exists for trailing slash recommendation
 			for i, c := range []byte(n.indices) {
-				if c == '/' || c == ':' {
+				if isClosingCharacter(c) {
 					n = n.children[i]
 					tsr = (len(n.path) == 1 && n.routeInfo != nil) ||
 						(n.nType == catchAll && n.children[0].routeInfo != nil)
@@ -438,8 +476,8 @@ walk: // Outer loop for walking the tree
 
 		// Nothing found. We can recommend to redirect to the same URL with an
 		// extra trailing slash if a leaf exists for that path
-		tsr = (path == "/" || path == ":") ||
-			(len(prefix) == len(path)+1 && (prefix[len(path)] == '/' || prefix[len(path)] == ':') &&
+		tsr = path == "/" ||
+			(len(prefix) == len(path)+1 && prefix[len(path)] == '/' &&
 				path == prefix[:len(prefix)-1] && n.routeInfo != nil)
 		return
 	}
@@ -586,7 +624,7 @@ walk: // Outer loop for walking the tree
 			case param:
 				// Find param end (either '/' or ':' or path end)
 				end := 0
-				for end < len(path) && path[end] != '/' && path[end] != ':' {
+				for end < len(path) && !isClosingCharacter(path[end]) {
 					end++
 				}
 
@@ -616,7 +654,7 @@ walk: // Outer loop for walking the tree
 					// No handle found. Check if a handle for this path + a
 					// trailing slash exists
 					n = n.children[0]
-					if (n.path == "/" || n.path == ":") && n.routeInfo != nil {
+					if len(n.path) >= 1 && isClosingCharacter(n.path[0]) && n.routeInfo != nil {
 						return append(ciPath, n.path[0])
 					}
 				}

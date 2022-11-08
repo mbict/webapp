@@ -203,6 +203,7 @@ func (r *Router) Lookup(method, path string) (webappv2.HandlerFunc, webappv2.Rou
 }
 
 func (r *Router) Handle(c webappv2.Context) error {
+
 	path := c.Path()
 	if root := r.trees[c.Method()]; root != nil {
 

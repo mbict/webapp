@@ -5,8 +5,11 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"sync"
 	"webappv2/container"
 )
+
+type Map map[string]interface{}
 
 type Context interface {
 	// Request returns `*http.Request`.
@@ -89,9 +92,16 @@ type Context interface {
 	// Set saves data in the context.
 	Set(key string, val interface{})
 
-	// Bind binds the request body into provided type `i`. The default binder
+	// Bind binds the request params and body into provided type `i`. The default binder
 	// does it based on Content-Type header.
 	Bind(i interface{}) error
+
+	// BindBody binds only the request body into provided type `i`. The default binder
+	// does it based on Content-Type header.
+	BindBody(i interface{}) error
+
+	// BindQueryParams binds the all request params except the body into provided type `i`.
+	BindQueryParams(i interface{}) error
 
 	// Validate validates provided `i`. It is usually called after `Context#Bind()`.
 	// Validator must be registered using `Echo#Validator`.
@@ -186,6 +196,8 @@ type context struct {
 	currentRoute RouteInfo
 	paramNames   []string
 	paramValues  []string
+	storeLock    sync.RWMutex
+	store        map[string]interface{}
 
 	webapp *webapp
 }
@@ -339,18 +351,32 @@ func (c *context) Cookies() []*http.Cookie {
 }
 
 func (c *context) Get(key string) interface{} {
-	//TODO implement me
-	panic("implement me")
+	c.storeLock.RLock()
+	defer c.storeLock.RUnlock()
+
+	return c.store[key]
 }
 
 func (c *context) Set(key string, val interface{}) {
-	//TODO implement me
-	panic("implement me")
+	c.storeLock.Lock()
+	defer c.storeLock.Unlock()
+
+	if c.store == nil {
+		c.store = make(Map)
+	}
+	c.store[key] = val
 }
 
 func (c *context) Bind(i interface{}) error {
-	//TODO implement me
-	panic("implement me")
+	return c.webapp.binder.Bind(c, i)
+}
+
+func (c *context) BindBody(i interface{}) error {
+	return c.webapp.binder.BindBody(c, i)
+}
+
+func (c *context) BindQueryParams(i interface{}) error {
+	return c.webapp.binder.BindQueryParams(c, i)
 }
 
 func (c *context) Validate(i interface{}) error {
@@ -484,8 +510,7 @@ func (c *context) Container() container.Container {
 func (c *context) reset(request *http.Request, response http.ResponseWriter) {
 	c.request = request
 	c.response.reset(response)
-
-	//reset param values
+	c.store = nil
 	c.paramNames = nil
 	c.paramValues = c.paramValues[0:c.webapp.maxParams]
 	for i := 0; i < c.webapp.maxParams; i++ {

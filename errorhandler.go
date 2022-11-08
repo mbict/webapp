@@ -6,7 +6,6 @@ import "net/http"
 type ErrorHandler func(Context, error) error
 
 var DefaultErrorHandler = func(c Context, err error) error {
-
 	he, ok := err.(*HTTPError)
 	if ok {
 		if he.Internal != nil {
@@ -22,13 +21,13 @@ var DefaultErrorHandler = func(c Context, err error) error {
 	}
 
 	message := he.Message
-	//if m, ok := he.Message.(string); ok {
-	//	if e.Debug {
-	//		message = Map{"message": m, "error": err.Error()}
-	//	} else {
-	//		message = Map{"message": m}
-	//	}
-	//}
+	if m, ok := he.Message.(string); ok {
+		//if e.Debug {
+		//	message = Map{"message": m, "error": err.Error()}
+		//} else {
+		message = Map{"message": m}
+		//}
+	}
 
 	// Send response
 	if c.Request().Method == http.MethodHead {

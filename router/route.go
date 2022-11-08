@@ -57,8 +57,7 @@ func (r *routeInfo) Handler() webappv2.HandlerFunc {
 
 func parsePath(path string) (string, []string) {
 	// TODO implement me getting the param names
-
-	return "", make([]string, countParams(path))
+	return "", extractParamNames(path)
 }
 
 func handlerName(h webappv2.HandlerFunc) string {

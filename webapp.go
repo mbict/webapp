@@ -24,7 +24,8 @@ func New(options ...Option) WebApp {
 	}
 	app.router = NewDefaultRouter()
 	app.routes = make(routes)
-	app.jsonEncoder = DefaultJSONEncoder{}
+	app.binder = DefaultBinder
+	app.jsonEncoder = DefaultJSONEncoder
 	app.errorHandler = DefaultErrorHandler
 
 	// Apply options that overwrite the default behaviour of the webapp
@@ -50,10 +51,10 @@ type webapp struct {
 	contextPool sync.Pool
 	maxParams   int
 
-	router  Router
-	routes  routes
-	handler HandlerFunc
-
+	router      Router
+	routes      routes
+	handler     HandlerFunc
+	binder      Binder
 	jsonEncoder JSONEncoding
 
 	*routeInfoGroup
@@ -109,8 +110,7 @@ func (a *webapp) Shutdown(ctx stdContext.Context) error {
 }
 
 func (a *webapp) Binder() Binder {
-	//TODO implement me
-	panic("implement me")
+	return a.binder
 }
 
 func (a *webapp) Validator() Validator {

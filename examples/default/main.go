@@ -8,6 +8,8 @@ import (
 	"webappv2/router"
 )
 
+type JSON map[string]interface{}
+
 func main() {
 
 	app := webappv2.New(
@@ -16,31 +18,68 @@ func main() {
 	)
 
 	app.GET("/", func(c webappv2.Context) error {
-		return c.JSON(http.StatusOK, "hello")
+		return c.JSON(http.StatusOK, JSON{"path": "/"})
 	})
 
-	//app.GET("/test/@test", func(c webappv2.Context) error {
-	//	return c.JSON(http.StatusOK, "hello test")
-	//})
-
-	//app.GET("/test/@test", func(c webappv2.Context) error {
-	//	return c.JSON(http.StatusOK, "hello test")
-	//})
-
-	app.GET("/test/blup:test", func(c webappv2.Context) error {
-		return c.JSON(http.StatusOK, "hello blup:test")
+	app.GET("/test", func(c webappv2.Context) error {
+		return c.JSON(http.StatusOK, JSON{"path": "/test"})
 	})
 
-	app.GET("/test/test:test", func(c webappv2.Context) error {
-		return c.JSON(http.StatusOK, "hello test:test")
+	app.GET("/test/*wildcard", func(c webappv2.Context) error {
+		return c.JSON(http.StatusOK, JSON{"path": "/test/*wildcard", "paramNames": c.ParamNames(), "paramValues": c.ParamValues()})
 	})
 
-	app.GET("/foo/@test:test", func(c webappv2.Context) error {
-		return c.JSON(http.StatusOK, "hello @test:test")
+	//intention driven urls with  {id}:{intention}
+	app.GET("/intention/{id}:rename", func(c webappv2.Context) error {
+		return c.JSON(http.StatusOK, JSON{"path": "/intention/{id}:rename", "paramNames": c.ParamNames(), "paramValues": c.ParamValues()})
 	})
 
-	app.GET("/foo/@test:foo", func(c webappv2.Context) error {
-		return c.JSON(http.StatusOK, "hello @test:foo")
+	app.GET("/intention/{id}:activate", func(c webappv2.Context) error {
+		return c.JSON(http.StatusOK, JSON{"path": "/intention/{id}:activate", "paramNames": c.ParamNames(), "paramValues": c.ParamValues()})
+	})
+
+	app.GET("/intention/{id}@activate", func(c webappv2.Context) error {
+		return c.JSON(http.StatusOK, JSON{"path": "/intention/{id}@activate", "paramNames": c.ParamNames(), "paramValues": c.ParamValues()})
+	})
+
+	app.GET("/intention/{id}/activate", func(c webappv2.Context) error {
+		return c.JSON(http.StatusOK, JSON{"path": "/intention/{id}/activate", "paramNames": c.ParamNames(), "paramValues": c.ParamValues()})
+	})
+
+	app.GET("/intention/{id}", func(c webappv2.Context) error {
+		return c.JSON(http.StatusOK, JSON{"path": "/intention/{id}", "paramNames": c.ParamNames(), "paramValues": c.ParamValues()})
+	})
+
+	app.GET("/intention/{id}/test", func(c webappv2.Context) error {
+		return c.JSON(http.StatusOK, JSON{"path": "/intention/{id}/test", "paramNames": c.ParamNames(), "paramValues": c.ParamValues()})
+	})
+
+	//binding
+	type bind struct {
+		Foo   string `path:"foo"`
+		Bar   string `query:"bar"`
+		Baz   string `query:"baz" default:"dflt value"`
+		Lorem string `json:"lorem"`
+	}
+
+	app.GET("/xyz/{foo}", func(c webappv2.Context) error {
+		request := &bind{}
+
+		if err := c.Bind(request); err != nil {
+			return err
+		}
+
+		return c.JSON(http.StatusOK, request)
+	})
+
+	app.POST("/test/{foo}", func(c webappv2.Context) error {
+		request := &bind{}
+
+		if err := c.Bind(request); err != nil {
+			return err
+		}
+
+		return c.JSON(http.StatusOK, request)
 	})
 
 	log.Print(app.Start(":8088"))

@@ -39,6 +39,12 @@ func WithRouter(router Router) Option {
 	}
 }
 
+func WithBinder(binder Binder) Option {
+	return func(app WebApp) {
+		app.(*webapp).binder = binder
+	}
+}
+
 func WithJsonEncoder(encoder JSONEncoding) Option {
 	return func(app WebApp) {
 		app.(*webapp).jsonEncoder = encoder
