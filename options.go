@@ -1,4 +1,4 @@
-package webappv2
+package webapp
 
 type Option func(WebApp)
 
@@ -10,10 +10,11 @@ func WithErrorHandler(errorHandlers ...ErrorHandler) Option {
 	}
 
 	eh := errorHandlers[len(errorHandlers)-1]
-	for i := len(errorHandlers) - 2; i >= 1; i-- {
-		next := errorHandlers[i]
+	for i := len(errorHandlers) - 2; i >= 0; i-- {
+		current := errorHandlers[i]
+		next := eh
 		eh = func(c Context, err error) error {
-			err = eh(c, err)
+			err = current(c, err)
 			if err != nil {
 				return next(c, err)
 			}
@@ -48,5 +49,17 @@ func WithBinder(binder Binder) Option {
 func WithJsonEncoder(encoder JSONEncoding) Option {
 	return func(app WebApp) {
 		app.(*webapp).jsonEncoder = encoder
+	}
+}
+
+func WithRenderer(renderer Renderer) Option {
+	return func(app WebApp) {
+		app.(*webapp).renderer = renderer
+	}
+}
+
+func WithValidator(validator Validator) Option {
+	return func(app WebApp) {
+		app.(*webapp).validator = validator
 	}
 }

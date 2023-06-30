@@ -1,4 +1,4 @@
-package webappv2
+package webapp
 
 import (
 	"errors"
@@ -124,7 +124,7 @@ func (b *ContextBinder) bind(c Context, i interface{}, bindBody bool) error {
 			return err
 		}
 
-		postDecoders, err := b.compileBinders(t, defaultPreDecoders)
+		postDecoders, err := b.compileBinders(t, defaultPostDecoders)
 		if err != nil {
 			return err
 		}

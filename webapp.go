@@ -1,4 +1,4 @@
-package webappv2
+package webapp
 
 import (
 	stdContext "context"
@@ -37,7 +37,7 @@ func New(options ...Option) WebApp {
 	app.routeInfoGroup = &routeInfoGroup{
 		routes:     app.routes,
 		RouteGroup: app.router.Group(""),
-		webapp:     app,
+		//webapp:     app,
 	}
 	app.handler = app.router.Handle
 
@@ -56,6 +56,8 @@ type webapp struct {
 	handler     HandlerFunc
 	binder      Binder
 	jsonEncoder JSONEncoding
+	renderer    Renderer
+	validator   Validator
 
 	*routeInfoGroup
 }

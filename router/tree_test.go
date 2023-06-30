@@ -10,5 +10,6 @@ func Test_ExtractParamNames(t *testing.T) {
 	assert.Equal(t, []string{"bar"}, extractParamNames("/foo/{bar}/baz"))
 	assert.Equal(t, []string{"bar", "baz"}, extractParamNames("/foo/{bar}/{baz}"))
 	assert.Equal(t, []string{"bar", "wildcard"}, extractParamNames("/foo/{bar}/*wildcard"))
+	assert.Equal(t, []string{"bar", "wildcard"}, extractParamNames("/foo/{bar}:action/*wildcard"))
 	assert.Equal(t, []string{"bar", "wildcard"}, extractParamNames("/foo/test@{bar}/*wildcard"))
 }

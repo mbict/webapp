@@ -1,4 +1,4 @@
-package webappv2
+package webapp
 
 import (
 	stdContext "context"

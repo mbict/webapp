@@ -1,4 +1,4 @@
-package webappv2
+package webapp
 
 import (
 	"net/http"
@@ -82,7 +82,6 @@ type RouteGroup interface {
 type routeInfoGroup struct {
 	routes routes
 	RouteGroup
-	webapp *webapp
 }
 
 func (g *routeInfoGroup) CONNECT(path string, h HandlerFunc, m ...MiddlewareFunc) RouteInfo {
@@ -136,7 +135,6 @@ func (g *routeInfoGroup) Group(prefix string, middleware ...MiddlewareFunc) Rout
 	return &routeInfoGroup{
 		routes:     g.routes,
 		RouteGroup: rg,
-		webapp:     g.webapp,
 	}
 }
 
@@ -144,10 +142,11 @@ func (g *routeInfoGroup) Add(method, path string, handler HandlerFunc, middlewar
 	routeInfo := g.RouteGroup.Add(method, path, handler, middleware...)
 	g.routes[routeInfo.Name()] = routeInfo
 
-	//optimalisation of reusing the params values slice
-	if len(routeInfo.Params()) > g.webapp.maxParams {
-		g.webapp.maxParams = len(routeInfo.Params())
-	}
+	////keep track of the amount of params is the biggest route, used for context optimisation
+	//numParams := len(routeInfo.Params())
+	//if numParams > g.maxParams {
+	//	g.maxParams = numParams
+	//}
 
 	return routeInfo
 }

@@ -1,9 +1,13 @@
-package webappv2
+package webapp
 
 import "net/http"
 
 // HandlerFunc defines a function to serve HTTP requests.
 type HandlerFunc func(c Context) error
+
+func (h HandlerFunc) Handle(c Context) error {
+	return h(c)
+}
 
 // Handler defines the interface to implement to serve HTTP requests.
 type Handler interface {

@@ -1,12 +1,14 @@
-package webappv2
+package webapp
 
 import (
+	"bytes"
+	stdContext "context"
+	"github.com/mbict/webapp/container"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"sync"
-	"webappv2/container"
 )
 
 type Map map[string]interface{}
@@ -14,6 +16,9 @@ type Map map[string]interface{}
 type Context interface {
 	// Request returns `*http.Request`.
 	Request() *http.Request
+
+	// Context returns the request context.Context
+	Context() stdContext.Context
 
 	// SetRequest sets `*http.Request`.
 	SetRequest(r *http.Request)
@@ -206,6 +211,10 @@ func (c *context) Request() *http.Request {
 	return c.request
 }
 
+func (c *context) Context() stdContext.Context {
+	return c.request.Context()
+}
+
 func (c *context) SetRequest(r *http.Request) {
 	c.request = r
 }
@@ -380,13 +389,15 @@ func (c *context) BindQueryParams(i interface{}) error {
 }
 
 func (c *context) Validate(i interface{}) error {
-	//TODO implement me
-	panic("implement me")
+	return c.webapp.validator.Validate(i)
 }
 
 func (c *context) Render(code int, name string, data interface{}) error {
-	//TODO implement me
-	panic("implement me")
+	buf := new(bytes.Buffer)
+	if err := c.webapp.renderer.Render(c, buf, name, data); err != nil {
+		return err
+	}
+	return c.HTMLBlob(code, buf.Bytes())
 }
 
 func (c *context) HTML(code int, html string) error {
@@ -478,7 +489,7 @@ func (c *context) NoContent() error {
 
 func (c *context) NotFound() error {
 	c.response.WriteHeader(http.StatusNotFound)
-	return nil
+	return ErrNotFound
 }
 
 func (c *context) Created(url string) error {

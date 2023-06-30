@@ -2,12 +2,12 @@ package router
 
 import (
 	"fmt"
+	"github.com/mbict/webapp"
 	"reflect"
 	"runtime"
-	"webappv2"
 )
 
-func newRouteInfo(method, path string, handler webappv2.HandlerFunc, middleware ...webappv2.MiddlewareFunc) *routeInfo {
+func newRouteInfo(method, path string, handler webapp.HandlerFunc, middleware ...webapp.MiddlewareFunc) *routeInfo {
 	template, params := parsePath(path)
 
 	//! TODO the params count is going to be part of the preallocation in webapp context
@@ -24,7 +24,7 @@ func newRouteInfo(method, path string, handler webappv2.HandlerFunc, middleware 
 
 type routeInfo struct {
 	name     string
-	handler  webappv2.HandlerFunc
+	handler  webapp.HandlerFunc
 	method   string
 	path     string
 	template string
@@ -51,7 +51,7 @@ func (r *routeInfo) Reverse(params ...interface{}) string {
 	return fmt.Sprintf(r.template, params...)
 }
 
-func (r *routeInfo) Handler() webappv2.HandlerFunc {
+func (r *routeInfo) Handler() webapp.HandlerFunc {
 	return r.handler
 }
 
@@ -60,7 +60,7 @@ func parsePath(path string) (string, []string) {
 	return "", extractParamNames(path)
 }
 
-func handlerName(h webappv2.HandlerFunc) string {
+func handlerName(h webapp.HandlerFunc) string {
 	t := reflect.ValueOf(h).Type()
 	if t.Kind() == reflect.Func {
 		return runtime.FuncForPC(reflect.ValueOf(h).Pointer()).Name()
@@ -68,7 +68,7 @@ func handlerName(h webappv2.HandlerFunc) string {
 	return t.String()
 }
 
-func applyMiddleware(h webappv2.HandlerFunc, middleware ...webappv2.MiddlewareFunc) webappv2.HandlerFunc {
+func applyMiddleware(h webapp.HandlerFunc, middleware ...webapp.MiddlewareFunc) webapp.HandlerFunc {
 	for i := len(middleware) - 1; i >= 0; i-- {
 		h = middleware[i](h)
 	}

@@ -1,4 +1,4 @@
-package webappv2
+package webapp
 
 // Validator is the interface that wraps the Validate function.
 type Validator interface {

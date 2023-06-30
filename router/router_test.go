@@ -1,13 +1,12 @@
 package router
 
 import (
+	"github.com/mbict/webapp"
+	"github.com/mbict/webapp/container"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"testing"
-	"webappv2"
-	"webappv2/container"
 )
 
 type testContext struct {
@@ -33,7 +32,7 @@ func (t *testContext) SetRequest(r *http.Request) {
 	panic("implement me")
 }
 
-func (t *testContext) Response() webappv2.Response {
+func (t *testContext) Response() webapp.Response {
 	//TODO implement me
 	panic("implement me")
 }
@@ -43,12 +42,12 @@ func (t *testContext) SetResponse(writer http.ResponseWriter) {
 	panic("implement me")
 }
 
-func (t *testContext) Routes() webappv2.Routes {
+func (t *testContext) Routes() webapp.Routes {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (t *testContext) CurrentRoute() webappv2.RouteInfo {
+func (t *testContext) CurrentRoute() webapp.RouteInfo {
 	//TODO implement me
 	panic("implement me")
 }
@@ -276,21 +275,21 @@ func (t *testContext) Container() container.Container {
 	panic("implement me")
 }
 
-func BenchmarkRouterHandleNoAllocations(b *testing.B) {
-
-	r := New()
-
-	r.GET("/intention/{id}:activate", func(c webappv2.Context) error { return nil })
-
-	//req, _ := http.NewRequest(http.MethodGet, "/test/intention/1234:activate", nil)
-	//rw := httptest.NewRecorder()
-	c := &testContext{}
-
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		for j := 0; j < 10000; j++ {
-			r.Handle(c)
-		}
-	}
-}
+//func BenchmarkRouterHandleNoAllocations(b *testing.B) {
+//
+//	r := New()
+//
+//	r.GET("/intention/{id}:activate", func(c webapp.Context) error { return nil })
+//
+//	//req, _ := http.NewRequest(http.MethodGet, "/test/intention/1234:activate", nil)
+//	//rw := httptest.NewRecorder()
+//	c := &testContext{}
+//
+//	b.ReportAllocs()
+//	b.ResetTimer()
+//	for i := 0; i < b.N; i++ {
+//		for j := 0; j < 10000; j++ {
+//			r.Handle(c)
+//		}
+//	}
+//}

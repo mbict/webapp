@@ -1,9 +1,9 @@
 package router
 
 import (
+	"github.com/mbict/webapp"
 	"net/http"
 	"strings"
-	"webappv2"
 )
 
 // Copyright 2013 Julien Schmidt. All rights reserved.
@@ -86,7 +86,7 @@ import (
 // Handle is a function that can be registered to a route to handle HTTP
 // requests. Like http.HandlerFunc, but has a third parameter for the values of
 // wildcards (path variables).
-type Handle = webappv2.HandlerFunc
+type Handle = webapp.HandlerFunc
 
 //// Param is a single URL parameter, consisting of a key and a value.
 //type Param struct {
@@ -162,14 +162,14 @@ type Router struct {
 
 	// Configurable http.Handler which is called when no matching route is
 	// found. If it is not set, http.NotFound is used.
-	NotFound http.Handler
+	NotFound webapp.Handler
 
 	// Configurable http.Handler which is called when a request
 	// cannot be routed and HandleMethodNotAllowed is true.
 	// If it is not set, http.Error with http.StatusMethodNotAllowed is used.
 	// The "Allow" header with allowed request methods is set before the handler
 	// is called.
-	MethodNotAllowed http.Handler
+	MethodNotAllowed webapp.Handler
 
 	// Function to handle panics recovered from http handlers.
 	// It should be used to generate a error page and return the http error code
@@ -182,12 +182,12 @@ type Router struct {
 	*group
 }
 
-func (r *Router) RouteNotFound(path string, h webappv2.HandlerFunc, m ...webappv2.MiddlewareFunc) webappv2.RouteInfo {
+func (r *Router) RouteNotFound(path string, h webapp.HandlerFunc, m ...webapp.MiddlewareFunc) webapp.RouteInfo {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r *Router) Lookup(method, path string) (webappv2.HandlerFunc, webappv2.RouteInfo) {
+func (r *Router) Lookup(method, path string) (webapp.HandlerFunc, webapp.RouteInfo) {
 	/*if root := r.trees[method]; root != nil {
 		handler, ps, tsr := root.getValue(path, r.getParams)
 		if handler == nil {
@@ -202,13 +202,13 @@ func (r *Router) Lookup(method, path string) (webappv2.HandlerFunc, webappv2.Rou
 	return nil, nil
 }
 
-func (r *Router) Handle(c webappv2.Context) error {
+func (r *Router) Handle(c webapp.Context) error {
 
 	path := c.Path()
 	if root := r.trees[c.Method()]; root != nil {
 
 		//get params buffer
-		pc := c.(webappv2.ParamsContext)
+		pc := c.(webapp.ParamsContext)
 		ps := pc.ParamValuesPtr()
 		*ps = (*ps)[0:0] // reset slice
 
@@ -264,15 +264,15 @@ func (r *Router) Handle(c webappv2.Context) error {
 	} else { //Handle method not allowed
 		if allow := r.allowed(path, c.Method()); allow != "" {
 			c.Response().Header().Set("Allow", allow)
-			return webappv2.ErrMethodNotAllowed
+			return webapp.ErrMethodNotAllowed
 		}
 	}
 
 	// Handle 404
-	return webappv2.ErrNotFound
+	return r.NotFound.Handle(c)
 }
 
-func (r *Router) add(method, path string, handler webappv2.HandlerFunc, middleware ...webappv2.MiddlewareFunc) webappv2.RouteInfo {
+func (r *Router) add(method, path string, handler webapp.HandlerFunc, middleware ...webapp.MiddlewareFunc) webapp.RouteInfo {
 
 	if method == "" {
 		panic("method must not be empty")
@@ -312,16 +312,23 @@ func (r *Router) add(method, path string, handler webappv2.HandlerFunc, middlewa
 }
 
 // New returns a new initialized Router.
-func New() *Router {
+func New(options ...Option) *Router {
 	r := &Router{
 		RedirectTrailingSlash:  true,
 		RedirectFixedPath:      true,
 		HandleMethodNotAllowed: true,
 		HandleOPTIONS:          true,
+		NotFound: webapp.HandlerFunc(func(c webapp.Context) error {
+			return c.NotFound()
+		}),
 	}
 
 	r.group = &group{
 		router: r,
+	}
+
+	for _, option := range options {
+		option(r)
 	}
 
 	return r

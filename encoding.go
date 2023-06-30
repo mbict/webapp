@@ -1,4 +1,4 @@
-package webappv2
+package webapp
 
 // JSONEncoding is the interface that encodes and decodes JSON to and from interfaces.
 type JSONEncoding interface {

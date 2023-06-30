@@ -400,8 +400,16 @@ walk: // Outer loop for walking the tree
 
 					// Save param value
 					if params != nil {
-						// Expand slice within preallocated capacity
 						i := len(*params)
+
+						//in case the params pre allocated size is too little we expand it
+						if cap(*params) <= i {
+							dst := make([]string, i+1)
+							copy(dst, *params)
+							*params = dst
+						}
+
+						// Expand slice within preallocated capacity
 						*params = (*params)[:i+1]
 						(*params)[i] = path[:end]
 					}

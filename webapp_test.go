@@ -1,4 +1,4 @@
-package webappv2
+package webapp
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -26,22 +26,22 @@ func Test_webapp_registered_routes(T *testing.T) {
 
 	require.Len(T, routes, 4)
 
-	assert.Equal(T, "webappv2.Test_webapp_registered_routes.func1", routes[0].Name())
+	assert.Equal(T, "github.com/mbict/webapp.Test_webapp_registered_routes.func1", routes[0].Name())
 	assert.Equal(T, "/test", routes[0].Path())
 	assert.Equal(T, "GET", routes[0].Method())
 	assert.Equal(T, []string{}, routes[0].Params())
 
-	assert.Equal(T, "webappv2.Test_webapp_registered_routes.func2", routes[1].Name())
+	assert.Equal(T, "github.com/mbict/webapp.Test_webapp_registered_routes.func2", routes[1].Name())
 	assert.Equal(T, "/test", routes[1].Path())
 	assert.Equal(T, "POST", routes[1].Method())
 	assert.Equal(T, []string{}, routes[1].Params())
 
-	assert.Equal(T, "webappv2.Test_webapp_registered_routes.func3", routes[2].Name())
+	assert.Equal(T, "github.com/mbict/webapp.Test_webapp_registered_routes.func3", routes[2].Name())
 	assert.Equal(T, "/test/foo", routes[2].Path())
 	assert.Equal(T, "GET", routes[2].Method())
 	assert.Equal(T, []string{}, routes[2].Params())
 
-	assert.Equal(T, "webappv2.Test_webapp_registered_routes.func4", routes[3].Name())
+	assert.Equal(T, "github.com/mbict/webapp.Test_webapp_registered_routes.func4", routes[3].Name())
 	assert.Equal(T, "/test/bar/blup", routes[3].Path())
 	assert.Equal(T, "GET", routes[3].Method())
 	assert.Equal(T, []string{}, routes[3].Params())
@@ -57,7 +57,9 @@ func Test_webapp_pre_runs_on_found_route(T *testing.T) {
 			return next(c)
 		}
 	})
-	webapp.GET("/test", func(c Context) error { return nil })
+	webapp.GET("/test", func(c Context) error {
+		return nil
+	})
 
 	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
 	rw := httptest.NewRecorder()

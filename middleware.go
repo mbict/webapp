@@ -1,9 +1,13 @@
-package webappv2
+package webapp
 
 import "net/http"
 
 // MiddlewareFunc defines a function to process middleware.
 type MiddlewareFunc func(next HandlerFunc) HandlerFunc
+
+func (h MiddlewareFunc) Handle(next HandlerFunc) HandlerFunc {
+	return h(next)
+}
 
 type Middleware interface {
 	Handle(next HandlerFunc) HandlerFunc
