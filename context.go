@@ -112,6 +112,9 @@ type Context interface {
 	// Validator must be registered using `Echo#Validator`.
 	Validate(i interface{}) error
 
+	// BindAndValidate is a convience method that combines Bind and Validate into one call
+	BindAndValidate(i interface{}) error
+
 	// Render renders a template with data and sends a text/html response with status
 	// code. Renderer must be registered using `Echo.Renderer`.
 	Render(code int, name string, data interface{}) error
@@ -390,6 +393,13 @@ func (c *context) BindQueryParams(i interface{}) error {
 
 func (c *context) Validate(i interface{}) error {
 	return c.webapp.validator.Validate(i)
+}
+
+func (c *context) BindAndValidate(i interface{}) error {
+	if err := c.Bind(i); err != nil {
+		return err
+	}
+	return c.Validate(i)
 }
 
 func (c *context) Render(code int, name string, data interface{}) error {

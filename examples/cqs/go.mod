@@ -1,8 +1,8 @@
 module webappv2/examples/cqs
 
-go 1.19
+go 1.23
 
-replace github.com/mbict/webapp v0.0.0 => ../../
+replace github.com/mbict/webapp => ./../
 
 require (
 	github.com/mbict/go-commandbus/v2 v2.0.0-20221027201733-382e24555100

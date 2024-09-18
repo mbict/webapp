@@ -6,6 +6,23 @@ import "net/http"
 type ErrorHandler func(Context, error) error
 
 var DefaultErrorHandler = func(c Context, err error) error {
+
+	if IsBindError(err) {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"message": err.Error(),
+			"error":   err,
+			"type":    "bind",
+		})
+	}
+
+	if IsValidationError(err) {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"message": err.Error(),
+			"error":   err,
+			"type":    "validation",
+		})
+	}
+
 	he, ok := err.(*HTTPError)
 	if ok {
 		if he.Internal != nil {

@@ -1,7 +1,7 @@
 module webappv2/examples/default
 
-replace "github.com/mbict/webapp" v0.0.0 => ../../
+go 1.23
 
-require "github.com/mbict/webapp" v0.0.0
+replace github.com/mbict/webapp => ./../../
 
-go 1.19
+require github.com/mbict/webapp v0.0.0-20230630153911-700d05ab545f

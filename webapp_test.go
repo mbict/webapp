@@ -48,7 +48,7 @@ func Test_webapp_registered_routes(T *testing.T) {
 }
 
 func Test_webapp_pre_runs_on_found_route(T *testing.T) {
-	webapp := New()
+	webapp := New(WithRouter(NewDefaultRouter()))
 
 	preDidRun := false
 	webapp.Pre(func(next HandlerFunc) HandlerFunc {
@@ -58,7 +58,7 @@ func Test_webapp_pre_runs_on_found_route(T *testing.T) {
 		}
 	})
 	webapp.GET("/test", func(c Context) error {
-		return nil
+		return c.String(200, "OK")
 	})
 
 	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
