@@ -23,10 +23,10 @@ var ErrUnsupportedType = errors.New("decoder: unsupported type")
 
 var defaultPreDecoders = []*tagDecoders{
 	{DefaultTag, defaultsGetterFunc},
+	{QueryTag, queryGetterFunc},
 }
 
 var defaultPostDecoders = []*tagDecoders{
-	{QueryTag, queryGetterFunc},
 	{ParamTag, paramsGetterFunc},
 	{HeaderTag, headerGetterFunc},
 	{CookieTag, cookieGetterFunc},
@@ -180,7 +180,7 @@ func (b *contextBinder) bind(c webapp.Context, i interface{}, bindBody bool) err
 		b.lock.Unlock()
 	}
 
-	//run the decoders that should run before serialize content
+	//run the decoders that should run before serialize content, like query,
 	for _, dec := range decoders.pre {
 		if err := dec(c, v); err != nil {
 			return err
@@ -193,7 +193,7 @@ func (b *contextBinder) bind(c webapp.Context, i interface{}, bindBody bool) err
 		}
 	}
 
-	//run the decoder that should run after a body decode, like query, params cookies and headers take precedence over values deserialized from a json
+	//run the decoder that should run after a body decode, params cookies and headers take precedence over values deserialized from a json
 	for _, dec := range decoders.post {
 		if err := dec(c, v); err != nil {
 			return err
