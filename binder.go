@@ -14,13 +14,16 @@ type Binder interface {
 	BindQueryParams(c Context, i interface{}) error
 }
 
+func NewBindError(err error) BindError {
+	return BindError{err: err}
+}
+
 type BindError struct {
 	err error
 }
 
 func (b BindError) Error() string {
-	//TODO implement me
-	panic("implement me")
+	return b.err.Error()
 }
 
 func (b BindError) Unwrap() error {

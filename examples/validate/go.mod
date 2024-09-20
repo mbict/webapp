@@ -7,7 +7,7 @@ replace github.com/mbict/webapp => ./../../
 replace github.com/mbict/webapp/validator => ./../../validator
 
 require (
-	github.com/mbict/webapp v0.0.0-20230630153911-700d05ab545f
+	github.com/mbict/webapp v0.0.0-20240918184906-9581e3fee779
 	github.com/mbict/webapp/validator v0.0.0-00010101000000-000000000000
 )
 

@@ -19,7 +19,7 @@ const (
 	RequestTag = "request"
 )
 
-var ErrUnsupportedType = errors.New("decoder: unsupported type")
+var ErrUnsupportedType = webapp.NewBindError(errors.New("decoder: unsupported type"))
 
 var defaultPreDecoders = []*tagDecoders{
 	{DefaultTag, defaultsGetterFunc},
@@ -183,20 +183,20 @@ func (b *contextBinder) bind(c webapp.Context, i interface{}, bindBody bool) err
 	//run the decoders that should run before serialize content, like query,
 	for _, dec := range decoders.pre {
 		if err := dec(c, v); err != nil {
-			return err
+			return webapp.NewBindError(err)
 		}
 	}
 
 	if bindBody == true {
 		if err := b.BindBody(c, i); err != nil {
-			return err
+			return webapp.NewBindError(err)
 		}
 	}
 
 	//run the decoder that should run after a body decode, params cookies and headers take precedence over values deserialized from a json
 	for _, dec := range decoders.post {
 		if err := dec(c, v); err != nil {
-			return err
+			return webapp.NewBindError(err)
 		}
 	}
 
