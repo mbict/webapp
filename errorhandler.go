@@ -1,6 +1,9 @@
 package webapp
 
-import "net/http"
+import (
+	"errors"
+	"net/http"
+)
 
 // ErrorHandler is a centralized error handler.
 type ErrorHandler func(Context, error) error
@@ -10,7 +13,7 @@ var DefaultErrorHandler = func(c Context, err error) error {
 	if IsBindError(err) {
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
 			"message": err.Error(),
-			"error":   err,
+			"error":   errors.Unwrap(err),
 			"type":    "bind",
 		})
 	}
